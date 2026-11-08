@@ -1,0 +1,20 @@
+[project]
+name = "valutatrade_hub"
+version = "0.1.0"
+description = "Platform for virtual crypto and fiat online trading."
+readme = "README.md"
+authors = [
+    { name = "rodr16k", email = "128830001+rodr16k@users.noreply.github.com" }
+]
+requires-python = ">=3.12"
+dependencies = [
+    "prettytable>=3.18.0",
+    "ruff>=0.17.4",
+]
+
+[project.scripts]
+valutatrade_hub = "valutatrade_hub:main"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
