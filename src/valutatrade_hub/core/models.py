@@ -4,6 +4,8 @@ import hmac
 
 from datetime import datetime
 
+from valutatrade_hub.core.utils import convert_currency
+
 
 class User:
     '''Класс пользователя системы'''
@@ -151,3 +153,62 @@ class Wallet:
 
     def get_balance_info(self) -> None:
         print(f"На балансе {self._balance} {self.currency_code}")
+
+
+class Portfolio:
+    def __init__(
+            self,
+            user: User,
+            wallets: dict[str, Wallet]
+    ):
+        if not isinstance(user, User):
+            raise TypeError(
+                f'Ожидается класс User, получено: {type(user).__name__}')
+        self._user = user
+        self._wallets: dict[str, Wallet] = dict(wallets) if wallets else {}
+
+    @property
+    def user(self) -> User:
+        """Возвращает объект пользователя"""
+        return self._user
+
+    @property
+    def wallets(self) -> dict[str, Wallet]:
+        return dict(self._wallets)
+
+    @staticmethod
+    def _normalize_code(currency_code: str) -> str:
+        if not isinstance(currency_code, str):
+            raise TypeError("Код валюты должен быть строкой")
+        code = currency_code.strip().upper()
+        if len(code) != 3 or not code.isalpha():
+            raise ValueError("Код валюты должен состоять из 3 букв (ISO 4217)")
+        return code
+
+    def add_currency(self, currency_code: str) -> None:
+        """Добавляет в портфолио новый кошелек"""
+        code = self._normalize_code(currency_code)
+        if code in self._wallets:
+            raise ValueError(f'В портфолио уже есть кошелек {code}')
+        new_wallet = Wallet(code)
+
+        self._wallets[code] = new_wallet
+
+    def get_wallet(self, currency_code: str) -> Wallet:
+        """Возвращает объект кошелька с указанной валютой"""
+        code = self._normalize_code(currency_code)
+        if code not in self._wallets:
+            raise ValueError(f'В кошельке нет активов в {code}')
+        wallet = self._wallets[code]
+        return wallet
+
+    def get_total_value(self, base_currency='USD') -> float:
+        """Возвращает общую стоимость всех валют в базовой валюте"""
+        base = self._normalize_code(base_currency)
+        total_value = 0.0
+        for currency, wallet in self._wallets.items():
+            if currency == base:
+                total_value += wallet.balance
+            else:
+                total_value += convert_currency(wallet.balance, currency, base)
+        return total_value
